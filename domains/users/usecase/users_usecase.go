@@ -26,8 +26,10 @@ func NewUserUseCase(repo users.UserRepository, jwtUC serverJWT.ServerJWTUseCase)
 
 // Dashboard implements [users.UserUseCase].
 func (u userUseCase) Dashboard(ctx context.Context, Id string) (*entities.User, error) {
+	//check for existing user
 	user, err := u.repo.FindUserbyID(Id)
 	if err != nil {
+		println("uc")
 		return nil, err
 	}
 
@@ -57,7 +59,7 @@ func (u userUseCase) Login(ctx context.Context, requests *request.LoginRequest) 
 	}
 
 	loginRequest := serverJWTRequest.LoginRequest{
-		UserId: user.Id,
+		UserId:      user.Id,
 		AccessToken: token,
 	}
 	err = u.jwtUC.Login(ctx, &loginRequest)
@@ -96,9 +98,9 @@ func (u userUseCase) SignUp(ctx context.Context, requests *request.SignUpRequest
 func (u userUseCase) Logout(ctx context.Context, request *request.LogoutRequest) (*response.LogoutResponse, error) {
 
 	//ini checkout in tokennya dari server jwt
-	u.jwtUC.Logout(ctx, &serverJWTRequest.LogoutRequest{AccessToken: request.AccessToken})
+	u.jwtUC.Logout(ctx, &serverJWTRequest.LogoutRequest{UserId: request.AccessToken})
 	//return info aja
 	return &response.LogoutResponse{
-		Information: "HALO BERHASIL SIGN UP HEHEHEHE",
+		Information: "HALO BERHASIL LOGOUT HEHEHEHE",
 	}, nil
 }

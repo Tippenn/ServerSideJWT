@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification"
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification/entities"
@@ -29,7 +31,7 @@ func (s serverJWTUseCase) Login(ctx context.Context, requests *request.LoginRequ
 
 // Logout implements [JWTVerification.ServerJWTUseCase].
 func (s serverJWTUseCase) Logout(ctx context.Context, requests *request.LogoutRequest) error {
-	jwtData, err := s.repo.FindServerJWTbyID(requests.AccessToken)
+	jwtData, err := s.repo.FindServerJWTbyUserID(requests.UserId)
 	if err != nil {
 		return err
 	}
@@ -48,6 +50,14 @@ func (s serverJWTUseCase) CheckJWTServer(ctx context.Context, requests *request.
 	jwtData, err := s.repo.FindServerJWTbyID(requests.AccessToken)
 	if err != nil {
 		return nil, err
+	}
+
+	if jwtData.Revoked {
+		return nil, errors.New("token Revoked")
+	}
+
+	if time.Now().After(jwtData.ExpiresAt) {
+		return nil, errors.New("token Expired")
 	}
 
 	return jwtData, nil

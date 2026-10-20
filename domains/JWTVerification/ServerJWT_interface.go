@@ -15,6 +15,7 @@ type ServerJWTUseCase interface {
 
 type ServerJWTRepository interface {
 	FindServerJWTbyID(Id string) (*entities.ServerJWT, error)
+	FindServerJWTbyUserID(Id string) (*entities.ServerJWT, error)
 	CreateServerJWT(accessToken string, userId string) (*entities.ServerJWT, error)
 	UpdateServerJWT(ServerJWT *entities.ServerJWT) error
 	DeleteServerJWT(accessToken string) error

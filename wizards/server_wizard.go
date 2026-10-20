@@ -14,7 +14,7 @@ func RegisterServer(router *gin.Engine) {
 	}
 
 	protected := router.Group("/auth")
-	protected.Use(middleware.AuthMiddleware())
+	protected.Use(middleware.AuthMiddleware(ServerJWTUc))
 	{
 		protected.GET("/dashboard", UserHttp.Dashboard)
 		protected.GET("/logout", ServerJWTHttp.Logout)

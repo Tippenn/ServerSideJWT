@@ -4,11 +4,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification"
+	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification/models/request"
 	"github.com/Tippenn/ServerSideJWT/shared/utils"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(uc JWTVerification.ServerJWTUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
@@ -16,10 +18,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
+		//signature + format check
 		userId, err := utils.ParseToken(tokenString)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"auth error1": err.Error()})
+			return
+		}
+
+		//server side check
+		_, err = uc.CheckJWTServer(c.Request.Context(), &request.CheckJWTRequest{AccessToken: tokenString})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"auth error2": err.Error()})
 			return
 		}
 

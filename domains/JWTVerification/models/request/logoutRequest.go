@@ -1,5 +1,5 @@
 package request
 
 type LogoutRequest struct {
-	AccessToken string `json:"accessToken" validate:"required"`
+	UserId string `json:"user_Id" validate:"required"`
 }

@@ -23,6 +23,7 @@ func (u userRepository) CreateUser(ctx context.Context, userId string, username 
 		Username: username,
 		Name:     name,
 		Password: password,
+		Enabled:  1,
 	}
 
 	result := u.db.GetInstance().Create(user)
@@ -39,6 +40,7 @@ func (u userRepository) FindUserbyID(Id string) (*entities.User, error) {
 	result := u.db.GetInstance().First(&user, "id=?", Id)
 
 	if result.Error != nil {
+		println("repo")
 		return nil, result.Error
 	}
 

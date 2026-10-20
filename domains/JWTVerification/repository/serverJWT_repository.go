@@ -7,6 +7,7 @@ import (
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification"
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification/entities"
 	"github.com/Tippenn/ServerSideJWT/infrastructure"
+	"gorm.io/gorm"
 )
 
 type serverJWTRepository struct {
@@ -45,6 +46,24 @@ func (s serverJWTRepository) FindServerJWTbyID(Id string) (*entities.ServerJWT, 
 	result := s.db.GetInstance().First(&user, "id=?", Id)
 
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("Token Not Found")
+		}
+		return nil, result.Error
+	}
+
+	return user, nil
+}
+
+// FindServerJWTbyUserID implements [JWTVerification.ServerJWTRepository].
+func (s serverJWTRepository) FindServerJWTbyUserID(Id string) (*entities.ServerJWT, error) {
+	var user *entities.ServerJWT
+	result := s.db.GetInstance().First(&user, "user_id=?", Id)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, errors.New("Token Not Found")
+		}
 		return nil, result.Error
 	}
 
@@ -56,7 +75,7 @@ func (s serverJWTRepository) UpdateServerJWT(ServerJWT *entities.ServerJWT) erro
 	var user *entities.ServerJWT
 	result := s.db.GetInstance().Model(&user).
 		Where("id = ?", ServerJWT.Id).
-		Update("revoked", ServerJWT.Revoked)
+		Update("revoked", true)
 
 	if result.Error != nil {
 		return result.Error

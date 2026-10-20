@@ -3,7 +3,7 @@ Database:
   Port: 5433
   User: postgres
   Password: tendean
-  DbName: urlshortener
+  DbName: serversidejwt
   SslMode: disable
   TimeZone: Asia/Bangkok
 Server:
