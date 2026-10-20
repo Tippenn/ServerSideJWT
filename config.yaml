@@ -1,0 +1,11 @@
+Database:
+  Host: 127.0.0.1
+  Port: 5433
+  User: postgres
+  Password: tendean
+  DbName: urlshortener
+  SslMode: disable
+  TimeZone: Asia/Bangkok
+Server:
+  port: 8080
+  BaseURL: http://localhost:8080
