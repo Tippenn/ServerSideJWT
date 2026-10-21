@@ -26,7 +26,7 @@ func AuthMiddleware(uc JWTVerification.ServerJWTUseCase) gin.HandlerFunc {
 		}
 
 		//server side check
-		_, err = uc.CheckJWTServer(c.Request.Context(), &request.CheckJWTRequest{AccessToken: tokenString})
+		_, err = uc.CheckJWTServer(c.Request.Context(), &request.CheckJWTRequest{UserId: userId})
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"auth error2": err.Error()})
 			return

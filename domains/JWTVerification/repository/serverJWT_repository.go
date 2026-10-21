@@ -1,25 +1,27 @@
 package repository
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification"
 	"github.com/Tippenn/ServerSideJWT/domains/JWTVerification/entities"
 	"github.com/Tippenn/ServerSideJWT/infrastructure"
-	"gorm.io/gorm"
+	"github.com/redis/go-redis/v9"
 )
 
 type serverJWTRepository struct {
-	db infrastructure.Database
+	cache infrastructure.Cache
 }
 
-func NewServerJWTRepository(db infrastructure.Database) JWTVerification.ServerJWTRepository {
-	return serverJWTRepository{db: db}
+func NewServerJWTRepository(cache infrastructure.Cache) JWTVerification.ServerJWTRepository {
+	return serverJWTRepository{cache: cache}
 }
 
 // CreateServerJWT implements [JWTVerification.ServerJWTRepository].
-func (s serverJWTRepository) CreateServerJWT(accessToken string, userId string) (*entities.ServerJWT, error) {
+func (s serverJWTRepository) CreateServerJWT(ctx context.Context, accessToken string, userId string) (*entities.ServerJWT, error) {
 	user := &entities.ServerJWT{
 		Id:        accessToken,
 		UserId:    userId,
@@ -27,61 +29,52 @@ func (s serverJWTRepository) CreateServerJWT(accessToken string, userId string) 
 		ExpiresAt: time.Now().Add(1 * time.Hour),
 	}
 
-	result := s.db.GetInstance().Create(user)
-	if result.Error != nil {
-		return nil, result.Error
+	data, err := json.Marshal(user)
+	if err != nil {
+		return nil, err
+	}
+
+	result := s.cache.GetInstance().Set(ctx, "UserId:"+userId, data, time.Hour*1)
+	if result.Err() != nil {
+		return nil, result.Err()
 	}
 
 	return user, nil
 }
 
 // DeleteServerJWT implements [JWTVerification.ServerJWTRepository].
-func (s serverJWTRepository) DeleteServerJWT(accessToken string) error {
-	panic("unimplemented")
-}
-
-// FindServerJWTbyID implements [JWTVerification.ServerJWTRepository].
-func (s serverJWTRepository) FindServerJWTbyID(Id string) (*entities.ServerJWT, error) {
-	var user *entities.ServerJWT
-	result := s.db.GetInstance().First(&user, "id=?", Id)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("Token Not Found")
-		}
-		return nil, result.Error
+func (s serverJWTRepository) DeleteServerJWT(ctx context.Context, userId string) error {
+	result := s.cache.GetInstance().Del(ctx, "UserId:"+userId)
+	if result.Err() != nil {
+		return result.Err()
 	}
-
-	return user, nil
+	return nil
 }
 
 // FindServerJWTbyUserID implements [JWTVerification.ServerJWTRepository].
-func (s serverJWTRepository) FindServerJWTbyUserID(Id string) (*entities.ServerJWT, error) {
+func (s serverJWTRepository) FindServerJWTbyUserID(ctx context.Context, userId string) (*entities.ServerJWT, error) {
 	var user *entities.ServerJWT
-	result := s.db.GetInstance().First(&user, "user_id=?", Id)
-
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("Token Not Found")
-		}
-		return nil, result.Error
+	result, err := s.cache.GetInstance().Get(ctx, "UserId:"+userId).Result()
+	if errors.Is(err, redis.Nil) {
+		return nil, err
 	}
-
+	err = json.Unmarshal([]byte(result), &user)
 	return user, nil
 }
 
 // UpdateServerJWT implements [JWTVerification.ServerJWTRepository].
-func (s serverJWTRepository) UpdateServerJWT(ServerJWT *entities.ServerJWT) error {
+func (s serverJWTRepository) UpdateServerJWT(ctx context.Context, ServerJWT *entities.ServerJWT) error {
 	var user *entities.ServerJWT
-	result := s.db.GetInstance().Model(&user).
-		Where("id = ?", ServerJWT.Id).
-		Update("revoked", true)
+	result, err := s.cache.GetInstance().Get(ctx, "UserId:"+ServerJWT.UserId).Result()
+	if errors.Is(err, redis.Nil) {
+		return err
+	}
+	err = json.Unmarshal([]byte(result), &user)
 
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected == 0 {
-		return errors.New("token not found")
-	}
+	user.Revoked = true
+
+	data, _ := json.Marshal(user)
+	s.cache.GetInstance().Set(ctx, "UserId:"+ServerJWT.UserId, data, redis.KeepTTL)
+
 	return nil
 }

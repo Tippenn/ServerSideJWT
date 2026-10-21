@@ -20,7 +20,7 @@ func NewServerJWTUseCase(repo JWTVerification.ServerJWTRepository) JWTVerificati
 
 // Login implements [JWTVerification.ServerJWTUseCase].
 func (s serverJWTUseCase) Login(ctx context.Context, requests *request.LoginRequest) error {
-	_, err := s.repo.CreateServerJWT(requests.AccessToken, requests.UserId)
+	_, err := s.repo.CreateServerJWT(ctx, requests.AccessToken, requests.UserId)
 
 	if err != nil {
 		return err
@@ -31,12 +31,12 @@ func (s serverJWTUseCase) Login(ctx context.Context, requests *request.LoginRequ
 
 // Logout implements [JWTVerification.ServerJWTUseCase].
 func (s serverJWTUseCase) Logout(ctx context.Context, requests *request.LogoutRequest) error {
-	jwtData, err := s.repo.FindServerJWTbyUserID(requests.UserId)
+	jwtData, err := s.repo.FindServerJWTbyUserID(ctx, requests.UserId)
 	if err != nil {
 		return err
 	}
 
-	err = s.repo.UpdateServerJWT(jwtData)
+	err = s.repo.DeleteServerJWT(ctx, jwtData.UserId)
 
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (s serverJWTUseCase) Logout(ctx context.Context, requests *request.LogoutRe
 
 // CheckJWTServer implements [JWTVerification.ServerJWTUseCase].
 func (s serverJWTUseCase) CheckJWTServer(ctx context.Context, requests *request.CheckJWTRequest) (*entities.ServerJWT, error) {
-	jwtData, err := s.repo.FindServerJWTbyID(requests.AccessToken)
+	jwtData, err := s.repo.FindServerJWTbyUserID(ctx, requests.UserId)
 	if err != nil {
 		return nil, err
 	}

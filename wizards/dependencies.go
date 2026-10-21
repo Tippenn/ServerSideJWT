@@ -16,10 +16,11 @@ var (
 
 	//Storage
 	PostgresDatabase = infrastructure.NewPostgresDatabase(Config)
+	RedisCache       = infrastructure.NewRedisDatabase(Config)
 
 	//repo
 	UserRepo      = repository.NewUserRepository(PostgresDatabase)
-	ServerJWTRepo = serverJWTRepository.NewServerJWTRepository(PostgresDatabase)
+	ServerJWTRepo = serverJWTRepository.NewServerJWTRepository(RedisCache)
 
 	//usecase
 	ServerJWTUc = serverJWTUsecase.NewServerJWTUseCase(ServerJWTRepo)

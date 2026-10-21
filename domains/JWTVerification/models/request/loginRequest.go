@@ -1,6 +1,6 @@
 package request
 
 type LoginRequest struct {
-	UserId      string `json:"userId" validate:"required"`
-	AccessToken string `json:"accessToken" validate:"required"`
+	UserId      string `json:"user_Id" validate:"required"`
+	AccessToken string `json:"access_Token" validate:"required"`
 }

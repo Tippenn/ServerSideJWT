@@ -11,6 +11,7 @@ type (
 	Config struct {
 		Database *Database
 		Server   *Server
+		Redis    *Redis
 	}
 
 	Database struct {
@@ -26,6 +27,12 @@ type (
 	Server struct {
 		Port    int
 		BaseURL string
+	}
+
+	Redis struct {
+		Host     string
+		Port     int
+		Password string
 	}
 )
 
